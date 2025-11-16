@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Review Sentiment Analysis Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #232f3e;
+            padding-top: 20px;
+            z-index: 1000;
+        }
+        .sidebar a {
+            color: #fff;
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background-color: #37475a;
+        }
+        .sidebar a.active {
+            background-color: #ff9900;
+            color: #232f3e;
+            font-weight: bold;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #232f3e;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: bold;
+        }
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #232f3e;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background-color: #ff9900;
+            border-color: #ff9900;
+        }
+        .btn-primary:hover {
+            background-color: #e88b00;
+            border-color: #e88b00;
+        }
+        .history-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .sentiment-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .sentiment-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .logo {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #37475a;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="bi bi-bar-chart-line-fill"></i> Amazon Sentiment Analysis
+        </div>
+        <a href="#" class="active" id="dashboard-link"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <a href="#" id="analyze-link"><i class="bi bi-chat-dots"></i> Analyze Review</a>
+        <a href="#" id="history-link"><i class="bi bi-clock-history"></i> History</a>
+        <a href="#" id="model-info-link"><i class="bi bi-info-circle"></i> Model Information</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard View -->
+        <div id="dashboard-view">
+            <h1 class="mb-4">Dashboard</h1>
+
+            <!-- Metrics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="metric-value">82.55%</div>
+                        <div class="metric-label">Model Accuracy</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="metric-value" id="total-reviews">0</div>
+                        <div class="metric-label">Total Reviews Analyzed</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="metric-value" id="positive-percent">0%</div>
+                        <div class="metric-label">Positive Reviews</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card">
+                        <div class="metric-value" id="negative-percent">0%</div>
+                        <div class="metric-label">Negative Reviews</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Sentiment Distribution</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="sentimentChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Review Categories</div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reviews -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">Recent Reviews</div>
+                        <div class="card-body">
+                            <div id="recent-reviews">
+                                <p class="text-muted">No reviews analyzed yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analyze Review View -->
+        <div id="analyze-view" style="display: none;">
+            <h1 class="mb-4">Analyze Review</h1>
+
+            <div class="card">
+                <div class="card-header">Enter Product Review</div>
+                <div class="card-body">
+                    <form id="analyze-form">
+                        <div class="mb-3">
+                            <label for="review-text" class="form-label">Review Text</label>
+                            <textarea class="form-control" id="review-text" name="review_text" rows="6" placeholder="Enter your review here..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="review-category" class="form-label">Category</label>
+                            <select class="form-select" id="review-category" name="category">
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Home">Home & Kitchen</option>
+                                <option value="Sports">Sports & Outdoors</option>
+                                <option value="Toys">Toys & Games</option>
+                                <option value="Beauty">Beauty</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="review-rating" class="form-label">Rating (1-5)</label>
+                            <select class="form-select" id="review-rating" name="rating">
+                                <option value="1">1 - Very Poor</option>
+                                <option value="2">2 - Poor</option>
+                                <option value="3">3 - Average</option>
+                                <option value="4">4 - Good</option>
+                                <option value="5">5 - Excellent</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="result-section" class="card mt-4" style="display: none;">
+                <div class="card-header">Analysis Result</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Original Review</h5>
+                            <p id="original-review-text"></p>
+                            <p><strong>Category:</strong> <span id="result-category"></span></p>
+                            <p><strong>Rating:</strong> <span id="result-rating"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sentiment Analysis</h5>
+                            <div id="sentiment-result"></div>
+                            <div class="mt-3">
+                                <canvas id="sentiment-confidence" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History View -->
+        <div id="history-view" style="display: none;">
+            <h1 class="mb-4">Review History</h1>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>All Reviews</span>
+                    <button class="btn btn-sm btn-outline-light" id="clear-history">Clear History</button>
+                </div>
+                <div class="card-body">
+                    <div id="history-list">
+                        <p class="text-muted">No reviews in history yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Info View -->
+        <div id="model-info-view" style="display: none;">
+            <h1 class="mb-4">Model Information</h1>
+
+            <div class="card">
+                <div class="card-header">Model Details</div>
+                <div class="card-body">
+                    <h5>Model Type</h5>
+                    <p>Logistic Regression</p>
+
+                    <h5>Performance Metrics</h5>
+                    <ul>
+                        <li>Accuracy: 82.55%</li>
+                        <li>Precision (Positive): 0.82</li>
+                        <li>Precision (Negative): 0.83</li>
+                        <li>Recall (Positive): 0.83</li>
+                        <li>Recall (Negative): 0.82</li>
+                        <li>F1-Score (Positive): 0.83</li>
+                        <li>F1-Score (Negative): 0.82</li>
+                    </ul>
+
+                    <h5>Confusion Matrix</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Predicted Negative</th>
+                                    <th>Predicted Positive</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>Actual Negative</th>
+                                    <td>809</td>
+                                    <td>182</td>
+                                </tr>
+                                <tr>
+                                    <th>Actual Positive</th>
+                                    <td>167</td>
+                                    <td>842</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5>Feature Extraction</h5>
+                    <p>TF-IDF Vectorization with max 5000 features</p>
+
+                    <h5>Training Data</h5>
+                    <p>Amazon Reviews Dataset with 40,000 reviews</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize charts
+        let sentimentChart;
+        let categoryChart;
+        let confidenceChart;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load review history from localStorage
+            loadReviewHistory();
+
+            // Initialize charts
+            initializeCharts();
+
+            // Setup event listeners
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Navigation
+            document.getElementById('dashboard-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showView('dashboard');
+            });
+
+            document.getElementById('analyze-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showView('analyze');
+            });
+
+            document.getElementById('history-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showView('history');
+            });
+
+            document.getElementById('model-info-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                showView('model-info');
+            });
+
+            // Analyze form
+            document.getElementById('analyze-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                analyzeReview();
+            });
+
+            // Clear history
+            document.getElementById('clear-history').addEventListener('click', function() {
+                if(confirm('Are you sure you want to clear all review history?')) {
+                    localStorage.removeItem('reviewHistory');
+                    loadReviewHistory();
+                }
+            });
+        }
+
+        function showView(view) {
+            // Hide all views
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('analyze-view').style.display = 'none';
+            document.getElementById('history-view').style.display = 'none';
+            document.getElementById('model-info-view').style.display = 'none';
+
+            // Remove active class from all links
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected view and set active link
+            switch(view) {
+                case 'dashboard':
+                    document.getElementById('dashboard-view').style.display = 'block';
+                    document.getElementById('dashboard-link').classList.add('active');
+                    updateDashboard();
+                    break;
+                case 'analyze':
+                    document.getElementById('analyze-view').style.display = 'block';
+                    document.getElementById('analyze-link').classList.add('active');
+                    break;
+                case 'history':
+                    document.getElementById('history-view').style.display = 'block';
+                    document.getElementById('history-link').classList.add('active');
+                    loadReviewHistory();
+                    break;
+                case 'model-info':
+                    document.getElementById('model-info-view').style.display = 'block';
+                    document.getElementById('model-info-link').classList.add('active');
+                    break;
+            }
+        }
+
+        function initializeCharts() {
+            // Sentiment Distribution Chart
+            const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+            sentimentChart = new Chart(sentimentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Negative'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: [
+                            '#28a745',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Category Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Electronics', 'Books', 'Clothing', 'Home', 'Sports', 'Toys', 'Beauty', 'Other'],
+                    datasets: [{
+                        label: 'Reviews by Category',
+                        data: [0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: '#ff9900'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function analyzeReview() {
+            const reviewText = document.getElementById('review-text').value;
+            const reviewCategory = document.getElementById('review-category').value;
+            const reviewRating = document.getElementById('review-rating').value;
+
+            // Show loading
+            const resultSection = document.getElementById('result-section');
+            resultSection.style.display = 'block';
+            resultSection.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Analyzing review...</p></div>';
+
+            // Send request to server for analysis
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: reviewText,
+                    category: reviewCategory,
+                    rating: reviewRating
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display results
+                displayResults(reviewText, reviewCategory, reviewRating, data);
+
+                // Save to history
+                saveToHistory(reviewText, reviewCategory, reviewRating, data);
+
+                // Update dashboard
+                updateDashboard();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultSection.innerHTML = '<div class="alert alert-danger">An error occurred while analyzing the review. Please try again.</div>';
+            });
+        }
+
+        function displayResults(text, category, rating, data) {
+            const resultSection = document.getElementById('result-section');
+
+            // Determine sentiment class
+            const sentimentClass = data.sentiment === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+            const sentimentIcon = data.sentiment === 'Positive' ? '😊' : '😞';
+
+            // Update result section HTML
+            resultSection.innerHTML = `
+                <div class="card-header">Analysis Result</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Original Review</h5>
+                            <p>${text}</p>
+                            <p><strong>Category:</strong> ${category}</p>
+                            <p><strong>Rating:</strong> ${rating}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sentiment Analysis</h5>
+                            <div class="${sentimentClass} text-center">
+                                <div style="font-size: 3rem;">${sentimentIcon}</div>
+                                <h3>${data.sentiment} Sentiment</h3>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <canvas id="sentiment-confidence" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Create confidence chart
+            const confidenceCtx = document.getElementById('sentiment-confidence').getContext('2d');
+            confidenceChart = new Chart(confidenceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [data.sentiment, 'Other'],
+                    datasets: [{
+                        data: [data.confidence, 100 - data.confidence],
+                        backgroundColor: [
+                            data.sentiment === 'Positive' ? '#28a745' : '#dc3545',
+                            '#e9ecef'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function saveToHistory(text, category, rating, data) {
+            // Get existing history from localStorage
+            let history = JSON.parse(localStorage.getItem('reviewHistory') || '[]');
+
+            // Add new review to history
+            history.unshift({
+                text: text,
+                category: category,
+                rating: rating,
+                sentiment: data.sentiment,
+                confidence: data.confidence,
+                timestamp: new Date().toISOString()
+            });
+
+            // Limit history to 50 items
+            if (history.length > 50) {
+                history = history.slice(0, 50);
+            }
+
+            // Save updated history to localStorage
+            localStorage.setItem('reviewHistory', JSON.stringify(history));
+        }
+
+        function loadReviewHistory() {
+            // Get history from localStorage
+            const history = JSON.parse(localStorage.getItem('reviewHistory') || '[]');
+            const historyList = document.getElementById('history-list');
+            const recentReviews = document.getElementById('recent-reviews');
+
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-muted">No reviews in history yet.</p>';
+                recentReviews.innerHTML = '<p class="text-muted">No reviews analyzed yet.</p>';
+                return;
+            }
+
+            // Display recent reviews (max 5)
+            let recentHTML = '';
+            const recentCount = Math.min(5, history.length);
+            for (let i = 0; i < recentCount; i++) {
+                const review = history[i];
+                const sentimentClass = review.sentiment === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+                const date = new Date(review.timestamp);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                recentHTML += `
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <span class="${sentimentClass}">${review.sentiment}</span>
+                                <span class="badge bg-secondary ms-2">${review.category}</span>
+                                <span class="badge bg-warning text-dark ms-1">Rating: ${review.rating}</span>
+                            </div>
+                            <small class="text-muted">${formattedDate}</small>
+                        </div>
+                        <p class="mt-2 mb-0">${review.text.substring(0, 150)}${review.text.length > 150 ? '...' : ''}</p>
+                    </div>
+                `;
+            }
+            recentReviews.innerHTML = recentHTML;
+
+            // Display all history
+            let historyHTML = '';
+            for (const review of history) {
+                const sentimentClass = review.sentiment === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+                const date = new Date(review.timestamp);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                historyHTML += `
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <span class="${sentimentClass}">${review.sentiment}</span>
+                                <span class="badge bg-secondary ms-2">${review.category}</span>
+                                <span class="badge bg-warning text-dark ms-1">Rating: ${review.rating}</span>
+                                <span class="badge bg-info ms-1">Confidence: ${review.confidence}%</span>
+                            </div>
+                            <small class="text-muted">${formattedDate}</small>
+                        </div>
+                        <p class="mt-2 mb-0">${review.text}</p>
+                    </div>
+                `;
+            }
+            historyList.innerHTML = historyHTML;
+        }
+
+        function updateDashboard() {
+            // Get history from localStorage
+            const history = JSON.parse(localStorage.getItem('reviewHistory') || '[]');
+
+            // Update metrics
+            document.getElementById('total-reviews').textContent = history.length;
+
+            if (history.length > 0) {
+                // Count sentiments
+                let positiveCount = 0;
+                let negativeCount = 0;
+                const categoryCounts = {
+                    'Electronics': 0,
+                    'Books': 0,
+                    'Clothing': 0,
+                    'Home': 0,
+                    'Sports': 0,
+                    'Toys': 0,
+                    'Beauty': 0,
+                    'Other': 0
+                };
+
+                for (const review of history) {
+                    if (review.sentiment === 'Positive') {
+                        positiveCount++;
+                    } else {
+                        negativeCount++;
+                    }
+
+                    if (categoryCounts.hasOwnProperty(review.category)) {
+                        categoryCounts[review.category]++;
+                    } else {
+                        categoryCounts['Other']++;
+                    }
+                }
+
+                // Update percentage metrics
+                const positivePercent = Math.round((positiveCount / history.length) * 100);
+                const negativePercent = Math.round((negativeCount / history.length) * 100);
+
+                document.getElementById('positive-percent').textContent = positivePercent + '%';
+                document.getElementById('negative-percent').textContent = negativePercent + '%';
+
+                // Update sentiment chart
+                sentimentChart.data.datasets[0].data = [positiveCount, negativeCount];
+                sentimentChart.update();
+
+                // Update category chart
+                categoryChart.data.datasets[0].data = Object.values(categoryCounts);
+                categoryChart.update();
+
+                // Update recent reviews
+                loadReviewHistory();
+            } else {
+                document.getElementById('positive-percent').textContent = '0%';
+                document.getElementById('negative-percent').textContent = '0%';
+
+                // Update charts with empty data
+                sentimentChart.data.datasets[0].data = [0, 0];
+                sentimentChart.update();
+
+                categoryChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0, 0, 0];
+                categoryChart.update();
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

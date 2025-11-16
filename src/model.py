@@ -23,7 +23,7 @@ class SentimentModel:
         model_type (str): Type of model to use. Options: 'logistic_regression', 'naive_bayes', 'svm', 'random_forest'
         """
         self.model_type = model_type
-        self.vectorizer = TfidfVectorizer(max_features=5000)
+        self.vectorizer = TfidfVectorizer(max_features=10000)
         self.model = self._initialize_model()
         self.is_trained = False
 

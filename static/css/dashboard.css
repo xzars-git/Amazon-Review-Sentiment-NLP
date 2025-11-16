@@ -1,0 +1,177 @@
+/* Custom styles for the dashboard */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px;
+    background-color: #232f3e;
+    padding-top: 20px;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar a {
+    color: #fff;
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.sidebar a:hover {
+    background-color: #37475a;
+    text-decoration: none;
+    color: #fff;
+}
+
+.sidebar a.active {
+    background-color: #ff9900;
+    color: #232f3e;
+    font-weight: bold;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: none;
+}
+
+.card-header {
+    background-color: #232f3e;
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: bold;
+}
+
+.metric-card {
+    text-align: center;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #232f3e;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: #ff9900;
+    border-color: #ff9900;
+}
+
+.btn-primary:hover {
+    background-color: #e88b00;
+    border-color: #e88b00;
+}
+
+.history-item {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+    transition: background-color 0.3s ease;
+}
+
+.history-item:hover {
+    background-color: #f8f9fa;
+}
+
+.sentiment-positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.sentiment-negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.logo {
+    text-align: center;
+    padding: 20px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #37475a;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation for charts */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.chart-container canvas {
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
