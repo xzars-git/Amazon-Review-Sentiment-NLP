@@ -207,8 +207,7 @@ def compare_models(df, text_column, sentiment_column):
     )
 
     for model_type in model_types:
-        print(f"
-Training and evaluating {model_type} model...")
+        print(f"Training and evaluating {model_type} model...")
         model = SentimentModel(model_type=model_type)
         model.train(X_train, y_train)
         results[model_type] = model.evaluate(X_test, y_test)
@@ -240,6 +239,5 @@ if __name__ == "__main__":
     test_text = "This is the best product I've ever bought!"
     prediction = model.predict(test_text)
     sentiment = "positive" if prediction == 1 else "negative"
-    print(f"
-Text: '{test_text}'")
+    print(f"Text: '{test_text}'")
     print(f"Predicted sentiment: {sentiment}")

@@ -13,8 +13,8 @@ preprocessor = TextPreprocessor()
 model = SentimentModel(model_type='logistic_regression')
 
 # Check if model is already trained
-if os.path.exists('models/logistic_regression_model.pkl'):
-    model.load_model('models/logistic_regression_model.pkl')
+if os.path.exists('models/best_sentiment_model.pkl'):
+    model.load_model('models/best_sentiment_model.pkl')
 else:
     print("Model not found. Please train the model first using train_model.py.")
 

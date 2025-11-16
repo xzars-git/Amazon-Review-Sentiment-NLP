@@ -1,0 +1,64 @@
+Model: logistic_regression
+Accuracy: 0.8255
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.83      0.82      0.82       991
+           1       0.82      0.83      0.83      1009
+
+    accuracy                           0.83      2000
+   macro avg       0.83      0.83      0.83      2000
+weighted avg       0.83      0.83      0.83      2000
+
+Confusion Matrix:
+[[809 182]
+ [167 842]]
+
+Model: naive_bayes
+Accuracy: 0.7990
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.81      0.78      0.79       991
+           1       0.79      0.82      0.80      1009
+
+    accuracy                           0.80      2000
+   macro avg       0.80      0.80      0.80      2000
+weighted avg       0.80      0.80      0.80      2000
+
+Confusion Matrix:
+[[773 218]
+ [184 825]]
+
+Model: svm
+Accuracy: 0.8170
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.82      0.81      0.81       991
+           1       0.81      0.83      0.82      1009
+
+    accuracy                           0.82      2000
+   macro avg       0.82      0.82      0.82      2000
+weighted avg       0.82      0.82      0.82      2000
+
+Confusion Matrix:
+[[798 193]
+ [173 836]]
+
+Model: random_forest
+Accuracy: 0.7960
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.80      0.79      0.79       991
+           1       0.79      0.81      0.80      1009
+
+    accuracy                           0.80      2000
+   macro avg       0.80      0.80      0.80      2000
+weighted avg       0.80      0.80      0.80      2000
+
+Confusion Matrix:
+[[778 213]
+ [195 814]]
+

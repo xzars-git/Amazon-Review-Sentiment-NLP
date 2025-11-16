@@ -21,6 +21,11 @@ try:
 except LookupError:
     nltk.download('wordnet')
 
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
+
 class TextPreprocessor:
     """
     A class for preprocessing text data for sentiment analysis.
@@ -125,7 +130,9 @@ def load_data(file_path):
     pandas.DataFrame: Loaded dataframe
     """
     try:
-        df = pd.read_csv(file_path)
+        # Load data without header and assign column names
+        df = pd.read_csv(file_path, header=None)
+        df.columns = ['Rating', 'Title', 'Text']
         return df
     except Exception as e:
         print(f"Error loading data: {e}")
@@ -146,18 +153,18 @@ def create_sentiment_labels(df, rating_column, text_column):
     df_copy = df.copy()
 
     # Create sentiment labels based on rating
-    # 1-2 stars: Negative, 3 stars: Neutral, 4-5 stars: Positive
+    # For this dataset with only ratings 1 and 2:
+    # Rating 1: Negative, Rating 2: Positive
     df_copy['sentiment'] = df_copy[rating_column].apply(
-        lambda x: 'negative' if x <= 2 else ('neutral' if x == 3 else 'positive')
+        lambda x: 'negative' if x == 1 else 'positive'
     )
-
-    # Filter out neutral reviews for binary classification
-    df_binary = df_copy[df_copy['sentiment'] != 'neutral'].copy()
 
     # Convert sentiment to binary (0 for negative, 1 for positive)
-    df_binary['sentiment_binary'] = df_binary['sentiment'].apply(
+    df_copy['sentiment_binary'] = df_copy['sentiment'].apply(
         lambda x: 0 if x == 'negative' else 1
     )
+    
+    df_binary = df_copy.copy()
 
     return df_binary
 
