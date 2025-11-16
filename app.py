@@ -37,43 +37,73 @@ def predict():
     """
     Make a prediction based on user input.
     """
-    if request.method == 'POST':
-        # Get the review text from the form
-        review_text = request.form['review_text']
-        category = request.form.get('category', 'Other')
-        rating = request.form.get('rating', '3')
+    try:
+        if request.method == 'POST':
+            # Get the review text from the form
+            if 'review_text' not in request.form:
+                return jsonify({
+                    'success': False,
+                    'error': 'Missing review_text field'
+                }), 400
 
-        # Preprocess the text
-        processed_text = preprocessor.preprocess_text(review_text)
+            review_text = request.form['review_text']
+            category = request.form.get('category', 'Other')
+            rating = request.form.get('rating', '3')
 
-        # Make prediction
-        prediction = model.predict(processed_text)
+            if not review_text.strip():
+                return jsonify({
+                    'success': False,
+                    'error': 'Review text cannot be empty'
+                }), 400
 
-        # Convert prediction to sentiment
-        sentiment = 'Positive' if prediction == 1 else 'Negative'
+            # Preprocess the text
+            processed_text = preprocessor.preprocess_text(review_text)
 
-        # Generate a confidence score (simulated)
-        confidence = round(random.uniform(0.7, 0.95), 2)
+            # Make prediction
+            try:
+                prediction = model.predict(processed_text)
+                print(f"Raw prediction: {prediction}")  # Debug line
 
-        # Save to history
-        review_entry = {
-            'id': len(review_history) + 1,
-            'text': review_text,
-            'category': category,
-            'rating': rating,
-            'sentiment': sentiment,
-            'confidence': confidence,
-            'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        review_history.append(review_entry)
+                # Convert prediction to sentiment
+                sentiment = 'Positive' if prediction == 1 else 'Negative'
+                print(f"Converted sentiment: {sentiment}")  # Debug line
 
-        # Return the result as JSON
+                # Generate a confidence score (simulated)
+                confidence = round(random.uniform(0.7, 0.95), 2)
+
+                # Save to history
+                review_entry = {
+                    'id': len(review_history) + 1,
+                    'text': review_text,
+                    'category': category,
+                    'rating': rating,
+                    'sentiment': sentiment,
+                    'confidence': confidence,
+                    'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                review_history.append(review_entry)
+
+                # Return the result as JSON
+                result = {
+                    'success': True,
+                    'sentiment': sentiment,
+                    'confidence': confidence,
+                    'review': review_entry,
+                    'sentiment_text': sentiment  # Explicitly add sentiment_text for frontend
+                }
+                print(f"Result to return: {result}")  # Debug line
+                return jsonify(result)
+            except Exception as e:
+                print(f"Error in prediction: {str(e)}")  # Debug line
+                return jsonify({
+                    'success': False,
+                    'error': f'Prediction error: {str(e)}'
+                }), 500
+    except Exception as e:
         return jsonify({
-            'success': True,
-            'sentiment': sentiment,
-            'confidence': confidence,
-            'review': review_entry
-        })
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }), 500
 
 @app.route('/api/history')
 def get_history():

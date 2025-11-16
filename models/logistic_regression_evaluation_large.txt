@@ -1,0 +1,19 @@
+Model: logistic_regression
+Training samples: 1600000
+Testing samples: 400000
+Training time: 24.79 seconds
+Max features: 20000
+Accuracy: 0.8725
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.88      0.87      0.87    199376
+           1       0.87      0.88      0.87    200624
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+Confusion Matrix:
+[[172929  26447]
+ [ 24569 176055]]

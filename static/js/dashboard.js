@@ -113,19 +113,25 @@ function setupForm() {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 displayResult(data);
                 loadMetrics();
                 loadHistory();
             } else {
-                alert('Error analyzing review');
+                // Display specific error message from server
+                alert(`Error: ${data.error || 'Unknown error occurred'}`);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error analyzing review');
+            alert(`Error analyzing review: ${error.message}`);
         });
     });
 }
@@ -136,9 +142,11 @@ function displayResult(data) {
     resultCategory.textContent = data.review.category;
     resultRating.textContent = data.review.rating + ' / 5';
 
-    const sentimentClass = data.sentiment === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
-    const sentimentIcon = data.sentiment === 'Positive' ? '😊' : '😞';
-    const sentimentText = data.sentiment === 'Positive' ? 'Positive Sentiment' : 'Negative Sentiment';
+    // Use the sentiment_text from server if available, otherwise fall back to sentiment
+    const sentimentValue = data.sentiment_text || data.sentiment || 'Unknown';
+    const sentimentClass = sentimentValue === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
+    const sentimentIcon = sentimentValue === 'Positive' ? '😊' : '😞';
+    const sentimentText = sentimentValue === 'Positive' ? 'Positive Sentiment' : 'Negative Sentiment';
 
     sentimentResult.innerHTML = `
         <div class="${sentimentClass} text-center">
