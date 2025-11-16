@@ -1,0 +1,285 @@
+{% extends "components/base.html" %}
+
+{% block title %}Model Info - Amazon Review Sentiment Analysis{% endblock %}
+
+{% block page_title %}Model Information{% endblock %}
+
+{% block content %}
+<div x-data="modelInfo()" x-init="init()">
+    <!-- Model Overview -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Model Overview</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="bg-blue-100 rounded-full p-4 w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+                    <i class="fas fa-brain text-blue-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-800">Model Type</h3>
+                <p class="text-gray-600">Logistic Regression</p>
+            </div>
+
+            <div class="text-center">
+                <div class="bg-green-100 rounded-full p-4 w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+                    <i class="fas fa-database text-green-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-800">Training Data</h3>
+                <p class="text-gray-600">1.6M Reviews</p>
+            </div>
+
+            <div class="text-center">
+                <div class="bg-purple-100 rounded-full p-4 w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+                    <i class="fas fa-bullseye text-purple-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-800">Accuracy</h3>
+                <p class="text-gray-600">87.25%</p>
+            </div>
+
+            <div class="text-center">
+                <div class="bg-orange-100 rounded-full p-4 w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+                    <i class="fas fa-cogs text-orange-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-800">Features</h3>
+                <p class="text-gray-600">20,000 TF-IDF</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Performance Metrics</h3>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-600">Accuracy</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 87.25%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">87.25%</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-600">Precision (Positive)</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 87%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">87%</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-600">Precision (Negative)</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 88%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">88%</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-600">Recall (Positive)</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 88%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">88%</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-600">Recall (Negative)</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 87%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">87%</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-600">F1-Score (Positive)</span>
+                    <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                            <div class="bg-orange-500 h-2 rounded-full" style="width: 87%"></div>
+                        </div>
+                        <span class="font-medium text-gray-800">87%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confusion Matrix -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Confusion Matrix</h3>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Predicted Negative
+                            </th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Predicted Positive
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                Actual Negative
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center bg-green-100 text-green-800">
+                                172,929
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center bg-red-100 text-red-800">
+                                26,447
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                Actual Positive
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center bg-red-100 text-red-800">
+                                24,569
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center bg-green-100 text-green-800">
+                                176,055
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-sm text-gray-600">True Positives</p>
+                    <p class="text-lg font-semibold text-green-700">176,055</p>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-sm text-gray-600">True Negatives</p>
+                    <p class="text-lg font-semibold text-green-700">172,929</p>
+                </div>
+                <div class="text-center p-3 bg-red-50 rounded-lg">
+                    <p class="text-sm text-gray-600">False Positives</p>
+                    <p class="text-lg font-semibold text-red-700">26,447</p>
+                </div>
+                <div class="text-center p-3 bg-red-50 rounded-lg">
+                    <p class="text-sm text-gray-600">False Negatives</p>
+                    <p class="text-lg font-semibold text-red-700">24,569</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Comparison -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Model Comparison</h3>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Model
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Training Samples
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Max Features
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Accuracy
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Training Time
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr class="bg-orange-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            Logistic Regression (Large)
+                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                Current
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            1,600,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            20,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            87.25%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            24.79s
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            Logistic Regression (Small)
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            400,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            10,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            85.12%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            6.23s
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            Naive Bayes
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            1,600,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            20,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            82.43%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            18.75s
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            SVM
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            400,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            10,000
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            86.78%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            312.41s
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/model.js') }}"></script>
+{% endblock %}

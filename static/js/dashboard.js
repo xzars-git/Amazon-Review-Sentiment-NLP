@@ -143,10 +143,18 @@ function displayResult(data) {
     resultRating.textContent = data.review.rating + ' / 5';
 
     // Use the sentiment_text from server if available, otherwise fall back to sentiment
-    const sentimentValue = data.sentiment_text || data.sentiment || 'Unknown';
+    const sentimentValue = data.sentiment_text || data.sentiment || data.review.sentiment || 'Unknown';
     const sentimentClass = sentimentValue === 'Positive' ? 'sentiment-positive' : 'sentiment-negative';
     const sentimentIcon = sentimentValue === 'Positive' ? '😊' : '😞';
     const sentimentText = sentimentValue === 'Positive' ? 'Positive Sentiment' : 'Negative Sentiment';
+
+    // Debug log
+    console.log('Sentiment data:', {
+        sentiment_text: data.sentiment_text,
+        sentiment: data.sentiment,
+        review_sentiment: data.review?.sentiment,
+        final_value: sentimentValue
+    });
 
     sentimentResult.innerHTML = `
         <div class="${sentimentClass} text-center">

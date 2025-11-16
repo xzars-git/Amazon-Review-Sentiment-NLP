@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import sys
 import os
 import json
@@ -25,12 +25,41 @@ else:
 # In-memory storage for reviews (in production, use a database)
 review_history = []
 
+# Routes
 @app.route('/')
 def dashboard():
     """
     Render the dashboard page.
     """
     return render_template('dashboard.html')
+
+@app.route('/analyze')
+def analyze():
+    """
+    Render the analyze page.
+    """
+    return render_template('analyze.html')
+
+@app.route('/history')
+def history():
+    """
+    Render the history page.
+    """
+    return render_template('history.html')
+
+@app.route('/model')
+def model_info():
+    """
+    Render the model info page.
+    """
+    return render_template('model.html')
+
+@app.route('/insights')
+def insights():
+    """
+    Render the insights page.
+    """
+    return render_template('insights.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -92,6 +121,13 @@ def predict():
                     'sentiment_text': sentiment  # Explicitly add sentiment_text for frontend
                 }
                 print(f"Result to return: {result}")  # Debug line
+
+                # Ensure all required fields are present
+                if not result.get('sentiment_text'):
+                    result['sentiment_text'] = sentiment
+                if not result.get('sentiment'):
+                    result['sentiment'] = sentiment
+
                 return jsonify(result)
             except Exception as e:
                 print(f"Error in prediction: {str(e)}")  # Debug line
@@ -102,72 +138,113 @@ def predict():
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': f'An error occurred: {str(e)}'
+            'error': str(e)
         }), 500
 
 @app.route('/api/history')
 def get_history():
     """
-    Get review history.
+    Get review history as JSON.
     """
-    return jsonify({'reviews': review_history})
-
-@app.route('/api/clear_history', methods=['POST'])
-def clear_history():
-    """
-    Clear review history.
-    """
-    global review_history
-    review_history = []
-    return jsonify({'success': True})
-
-@app.route('/api/metrics')
-def get_metrics():
-    """
-    Get dashboard metrics.
-    """
-    if not review_history:
+    try:
         return jsonify({
-            'total_reviews': 0,
-            'positive_percent': 0,
-            'negative_percent': 0,
-            'categories': {},
-            'sentiments': {'Positive': 0, 'Negative': 0}
+            'success': True,
+            'history': review_history
         })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-    total_reviews = len(review_history)
-    positive_count = sum(1 for r in review_history if r['sentiment'] == 'Positive')
-    negative_count = total_reviews - positive_count
-
-    positive_percent = round((positive_count / total_reviews) * 100, 1) if total_reviews > 0 else 0
-    negative_percent = round((negative_count / total_reviews) * 100, 1) if total_reviews > 0 else 0
-
-    # Count by category
-    categories = defaultdict(int)
-    for review in review_history:
-        categories[review['category']] += 1
-
-    return jsonify({
-        'total_reviews': total_reviews,
-        'positive_percent': positive_percent,
-        'negative_percent': negative_percent,
-        'categories': dict(categories),
-        'sentiments': {'Positive': positive_count, 'Negative': negative_count}
-    })
-
-@app.route('/index')
-def index():
+@app.route('/api/history/<int:review_id>', methods=['DELETE'])
+def delete_review(review_id):
     """
-    Render the original index page (for backward compatibility).
+    Delete a review from history.
     """
-    return render_template('index.html')
+    try:
+        global review_history
+        review_history = [r for r in review_history if r['id'] != review_id]
+        return jsonify({
+            'success': True,
+            'message': 'Review deleted successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@app.route('/result')
-def result():
+@app.route('/api/model_info')
+def get_model_info():
     """
-    Render the result page (for backward compatibility).
+    Get model information as JSON.
     """
-    return render_template('result.html')
+    try:
+        # Read model evaluation file
+        eval_path = 'models/logistic_regression_evaluation_large.txt'
+        model_info = {}
+
+        if os.path.exists(eval_path):
+            with open(eval_path, 'r') as f:
+                content = f.read()
+                # Parse the evaluation file
+                lines = content.split('\n')
+                for line in lines:
+                    if line.startswith('Model:'):
+                        model_info['model_type'] = line.split(': ')[1]
+                    elif line.startswith('Accuracy:'):
+                        model_info['accuracy'] = float(line.split(': ')[1])
+                    elif line.startswith('Training samples:'):
+                        model_info['training_samples'] = int(line.split(': ')[1])
+                    elif line.startswith('Testing samples:'):
+                        model_info['testing_samples'] = int(line.split(': ')[1])
+                    elif line.startswith('Max features:'):
+                        model_info['max_features'] = int(line.split(': ')[1])
+
+        return jsonify({
+            'success': True,
+            'model_info': model_info
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/insights')
+def get_insights():
+    """
+    Get sentiment insights as JSON.
+    """
+    try:
+        # Generate mock insights data
+        insights = {
+            'total_reviews': len(review_history) if review_history else 2400000,
+            'positive_percentage': 68,
+            'negative_percentage': 32,
+            'average_rating': 4.2,
+            'trend_data': {
+                'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                'positive': [65, 68, 66, 70, 68, 72],
+                'negative': [35, 32, 34, 30, 32, 28]
+            },
+            'category_data': {
+                'labels': ['Electronics', 'Books', 'Clothing', 'Home & Kitchen', 'Sports', 'Toys'],
+                'positive': [72, 68, 65, 70, 58, 75],
+                'negative': [28, 32, 35, 30, 42, 25]
+            }
+        }
+
+        return jsonify({
+            'success': True,
+            'insights': insights
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

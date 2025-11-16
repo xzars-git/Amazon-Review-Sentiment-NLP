@@ -1,0 +1,184 @@
+{% extends "components/base.html" %}
+
+{% block title %}Analyze Review - Amazon Review Sentiment Analysis{% endblock %}
+
+{% block page_title %}Analyze Review{% endblock %}
+
+{% block content %}
+<div x-data="analyzeReview()" x-init="init()">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Input Section -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Review Analysis</h2>
+
+                <form @submit.prevent="analyzeReview()">
+                    <div class="mb-4">
+                        <label for="reviewText" class="block text-sm font-medium text-gray-700 mb-2">
+                            Review Text
+                        </label>
+                        <textarea id="reviewText" rows="6" x-model="reviewText"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                  placeholder="Enter the review text you want to analyze..."></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                                Product Category
+                            </label>
+                            <select id="category" x-model="category"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Home & Kitchen">Home & Kitchen</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Toys">Toys</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="rating" class="block text-sm font-medium text-gray-700 mb-2">
+                                Rating
+                            </label>
+                            <div class="flex items-center">
+                                <input type="range" id="rating" min="1" max="5" x-model="rating"
+                                       class="w-full mr-3">
+                                <div class="flex">
+                                    <template x-for="i in 5" :key="i">
+                                        <i class="fas fa-star text-lg"
+                                           :class="i <= rating ? 'text-yellow-400' : 'text-gray-300'"></i>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="isAnalyzing"
+                                class="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50">
+                            <span x-show="!isAnalyzing">Analyze Sentiment</span>
+                            <span x-show="isAnalyzing">
+                                <i class="fas fa-spinner fa-spin mr-2"></i> Analyzing...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Analysis Results -->
+            <div x-show="results" x-transition class="bg-white rounded-lg shadow p-6 mt-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Analysis Results</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">Sentiment Analysis</h3>
+                        <div class="text-center p-6 rounded-lg"
+                             :class="results.sentiment === 'Positive' ? 'bg-green-50' : 'bg-red-50'">
+                            <div class="text-5xl mb-3">
+                                <i class="fas" 
+                                   :class="results.sentiment === 'Positive' ? 'fa-smile text-green-500' : 'fa-frown text-red-500'"></i>
+                            </div>
+                            <h4 class="text-xl font-semibold mb-2"
+                                :class="results.sentiment === 'Positive' ? 'text-green-700' : 'text-red-700'">
+                                <span x-text="results.sentiment"></span> Sentiment
+                            </h4>
+                            <div class="mb-3">
+                                <div class="text-sm text-gray-600 mb-1">Confidence</div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="h-2.5 rounded-full"
+                                         :class="results.sentiment === 'Positive' ? 'bg-green-500' : 'bg-red-500'"
+                                         :style="`width: ${results.confidence * 100}%`"></div>
+                                </div>
+                                <div class="text-sm font-medium mt-1">
+                                    <span x-text="Math.round(results.confidence * 100)"></span>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">Review Details</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Category:</span>
+                                <span class="font-medium" x-text="results.category"></span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Rating:</span>
+                                <div class="flex items-center">
+                                    <span class="font-medium mr-2" x-text="results.rating"></span>
+                                    <div class="flex">
+                                        <template x-for="i in 5" :key="i">
+                                            <i class="fas fa-star text-sm"
+                                               :class="i <= results.rating ? 'text-yellow-400' : 'text-gray-300'"></i>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Analyzed at:</span>
+                                <span class="font-medium" x-text="results.timestamp"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Sample Reviews -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Sample Reviews</h3>
+                <div class="space-y-3">
+                    <template x-for="sample in sampleReviews" :key="sample.id">
+                        <div class="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                             @click="useSample(sample)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-sm font-medium text-gray-700" x-text="sample.category"></span>
+                                <div class="flex">
+                                    <template x-for="i in 5" :key="i">
+                                        <i class="fas fa-star text-xs"
+                                           :class="i <= sample.rating ? 'text-yellow-400' : 'text-gray-300'"></i>
+                                    </template>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 line-clamp-3" x-text="sample.text"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Analysis Tips</h3>
+                <div class="space-y-3">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-gray-600">
+                            Include specific details about your experience for more accurate sentiment analysis.
+                        </p>
+                    </div>
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-gray-600">
+                            The model works best with reviews that are at least 10 words long.
+                        </p>
+                    </div>
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                        <p class="text-sm text-gray-600">
+                            Reviews with mixed sentiment may show lower confidence scores.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/analyze.js') }}"></script>
+{% endblock %}

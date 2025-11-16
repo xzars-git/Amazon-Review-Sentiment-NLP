@@ -1,0 +1,219 @@
+{% extends "components/base.html" %}
+
+{% block title %}Insights - Amazon Review Sentiment Analysis{% endblock %}
+
+{% block page_title %}Sentiment Insights{% endblock %}
+
+{% block content %}
+<div x-data="insights()" x-init="init()">
+    <!-- Filter Options -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Filter Options</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="categoryFilter" class="block text-sm font-medium text-gray-700 mb-2">
+                    Product Category
+                </label>
+                <select id="categoryFilter" x-model="filters.category"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="all">All Categories</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Books">Books</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Home & Kitchen">Home & Kitchen</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Toys">Toys</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="timeRange" class="block text-sm font-medium text-gray-700 mb-2">
+                    Time Range
+                </label>
+                <select id="timeRange" x-model="filters.timeRange"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="ratingFilter" class="block text-sm font-medium text-gray-700 mb-2">
+                    Rating Range
+                </label>
+                <select id="ratingFilter" x-model="filters.rating"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="all">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-4 flex justify-end">
+            <button @click="applyFilters()" 
+                    class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                Apply Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Insights Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                    <i class="fas fa-comments text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Reviews</p>
+                    <p class="text-2xl font-semibold text-gray-800">2.4M</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-arrow-up text-green-500"></i> 12% from last period
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                    <i class="fas fa-smile text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Positive Sentiment</p>
+                    <p class="text-2xl font-semibold text-gray-800">68%</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-arrow-up text-green-500"></i> 5% from last period
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                    <i class="fas fa-frown text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Negative Sentiment</p>
+                    <p class="text-2xl font-semibold text-gray-800">32%</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-arrow-down text-green-500"></i> 5% from last period
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
+                    <i class="fas fa-star text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Average Rating</p>
+                    <p class="text-2xl font-semibold text-gray-800">4.2</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-arrow-up text-green-500"></i> 0.3 from last period
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Sentiment Trend Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Sentiment Trend Over Time</h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="sentimentTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Distribution -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Sentiment by Category</h3>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Key Insights</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-4 border-l-4 border-blue-500 bg-blue-50">
+                <h4 class="font-medium text-blue-800 mb-2">
+                    <i class="fas fa-chart-line mr-2"></i>Rising Positive Sentiment
+                </h4>
+                <p class="text-sm text-gray-700">
+                    Customer satisfaction has improved by 5% in the last quarter, with Electronics 
+                    and Home & Kitchen categories showing the most significant gains.
+                </p>
+            </div>
+
+            <div class="p-4 border-l-4 border-green-500 bg-green-50">
+                <h4 class="font-medium text-green-800 mb-2">
+                    <i class="fas fa-lightbulb mr-2"></i>High-Performing Products
+                </h4>
+                <p class="text-sm text-gray-700">
+                    Products with 4-5 star ratings show 87% positive sentiment, indicating 
+                    strong correlation between rating and sentiment analysis.
+                </p>
+            </div>
+
+            <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50">
+                <h4 class="font-medium text-yellow-800 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Areas for Improvement
+                </h4>
+                <p class="text-sm text-gray-700">
+                    The Sports category shows the highest negative sentiment at 42%, 
+                    with delivery and product quality being the most common complaints.
+                </p>
+           >
+
+            <div class="p-4 border-l-4 border-purple-500 bg-purple-50">
+                <h4 class="font-medium text-purple-800 mb-2">
+                    <i class="fas fa-users mr-2"></i>Customer Engagement
+                </h4>
+                <p class="text-sm text-gray-700">
+                    Reviews with 100+ words show more detailed sentiment patterns, 
+                    providing richer insights for product improvements.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Clouds -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Positive Keywords</h3>
+            <div class="flex justify-center">
+                <img src="{{ url_for('static', filename='images/positive_wordcloud.png') }}" alt="Positive Word Cloud" 
+                     class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Negative Keywords</h3>
+            <div class="flex justify-center">
+                <img src="{{ url_for('static', filename='images/negative_wordcloud.png') }}" alt="Negative Word Cloud" 
+                     class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/insights.js') }}"></script>
+{% endblock %}

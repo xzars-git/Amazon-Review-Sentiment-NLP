@@ -1,0 +1,231 @@
+{% extends "components/base.html" %}
+
+{% block title %}History - Amazon Review Sentiment Analysis{% endblock %}
+
+{% block page_title %}Review History{% endblock %}
+
+{% block content %}
+<div x-data="reviewHistory()" x-init="init()">
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 md:mb-0">Review Analysis History</h2>
+            <button @click="exportHistory()" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                <i class="fas fa-download mr-2"></i>Export History
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <select x-model="filterSentiment" @change="filterHistory()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="">All Sentiments</option>
+                    <option value="Positive">Positive</option>
+                    <option value="Negative">Negative</option>
+                </select>
+            </div>
+
+            <div>
+                <select x-model="filterCategory" @change="filterHistory()"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="">All Categories</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Books">Books</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Home & Kitchen">Home & Kitchen</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Toys">Toys</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-500 mr-4">
+                    <i class="fas fa-history text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Reviews</p>
+                    <p class="text-2xl font-semibold text-gray-800" x-text="summary.total"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-500 mr-4">
+                    <i class="fas fa-smile text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Positive</p>
+                    <p class="text-2xl font-semibold text-gray-800" x-text="summary.positive"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100 text-red-500 mr-4">
+                    <i class="fas fa-frown text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Negative</p>
+                    <p class="text-2xl font-semibold text-gray-800" x-text="summary.negative"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-500 mr-4">
+                    <i class="fas fa-percentage text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Avg. Confidence</p>
+                    <p class="text-2xl font-semibold text-gray-800" x-text="summary.avgConfidence + '%'"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Review Text
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Rating
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Sentiment
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Confidence
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="review in paginatedHistory" :key="review.id">
+                        <tr>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    <span x-text="review.text.length > 100 ? review.text.substring(0, 100) + '...' : review.text"></span>
+                                    <button x-show="review.text.length > 100" @click="review.expanded = !review.expanded" 
+                                            class="text-blue-500 hover:text-blue-700 ml-1">
+                                        <span x-text="review.expanded ? 'Show less' : 'Show more'"></span>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900" x-text="review.category"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex">
+                                        <template x-for="i in 5" :key="i">
+                                            <i class="fas fa-star text-sm"
+                                               :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-300'"></i>
+                                        </template>
+                                    </div>
+                                    <span class="ml-2 text-sm text-gray-900" x-text="review.rating + '/5'"></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                      :class="review.sentiment === 'Positive' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                      x-text="review.sentiment"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full"
+                                         :class="review.sentiment === 'Positive' ? 'bg-green-500' : 'bg-red-500'"
+                                         :style="`width: ${review.confidence * 100}%`"></div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span x-text="Math.round(review.confidence * 100)"></span>%
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span x-text="review.date"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button @click="viewDetails(review)" class="text-orange-600 hover:text-orange-900 mr-3">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button @click="deleteReview(review.id)" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button @click="prevPage()" :disabled="currentPage === 1"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Previous
+                </button>
+                <button @click="nextPage()" :disabled="currentPage === totalPages"
+                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    Next
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing
+                        <span class="font-medium" x-text="(currentPage - 1) * itemsPerPage + 1"></span>
+                        to
+                        <span class="font-medium" x-text="Math.min(currentPage * itemsPerPage, filteredHistory.length)"></span>
+                        of
+                        <span class="font-medium" x-text="filteredHistory.length"></span>
+                        results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button @click="prevPage()" :disabled="currentPage === 1"
+                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+
+                        <template x-for="page in Math.min(5, totalPages)" :key="page">
+                            <button @click="goToPage(page)" 
+                                    :class="page === currentPage ? 'z-10 bg-orange-50 border-orange-500-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium'">
+                                <span x-text="page"></span>
+                            </button>
+                        </template>
+
+                        <button @click="nextPage()" :disabled="currentPage === totalPages"
+                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}
