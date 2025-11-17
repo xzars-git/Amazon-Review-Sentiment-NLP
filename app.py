@@ -61,6 +61,27 @@ def insights():
     """
     return render_template('insights.html')
 
+@app.route('/insights/data')
+def insights_data():
+    """
+    Get insights data for charts.
+    """
+    return jsonify({
+        'success': True,
+        'insights': {
+            'trend_data': {
+                'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                'positive': [65, 68, 66, 70, 68, 72],
+                'negative': [35, 32, 34, 30, 32, 28]
+            },
+            'category_data': {
+                'labels': ['Electronics', 'Books', 'Clothing', 'Home & Kitchen', 'Sports', 'Toys'],
+                'positive': [72, 68, 65, 70, 58, 75],
+                'negative': [28, 32, 35, 30, 42, 25]
+            }
+        }
+    })
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """

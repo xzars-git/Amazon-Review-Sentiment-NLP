@@ -341,6 +341,14 @@ const api = {
         }
 
         return await response.json();
+    },
+
+    async getInsights() {
+        const response = await fetch('/insights/data');
+        if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+        }
+        return await response.json();
     }
 };
 
